@@ -1,4 +1,4 @@
 name: agda-magic
 depend: cubical
 include: .
-flags: --cubical --guardedness --safe -WnoUnsupportedIndexedMatch
+flags: --cubical --guardedness --allow-unsolved-metas -WnoUnsupportedIndexedMatch

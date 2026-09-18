@@ -10,6 +10,7 @@ open import Cubical.Foundations.Function
 open import Cubical.Foundations.Pointed.Base
 
 open import Cubical.Data.Nat
+open import Cubical.Data.Sigma
 
 open import Cubical.HITs.PropositionalTruncation.Base
     renaming ( ∥_∥₁ to ∥_∥ 
@@ -20,7 +21,6 @@ open import Cubical.HITs.PropositionalTruncation.Base
 open import Cubical.HITs.PropositionalTruncation.Properties
 
 import Cubical.Foundations.Pointed.Homogeneous as hg
-
 
 ------------------------------------------------------------------------------
 
@@ -56,6 +56,8 @@ there is an equality of pointed types (A, a) ≡ (A, B).
 isHomogeneous : ∀ {ℓ} → Pointed ℓ → Type (ℓ-suc ℓ)
 isHomogeneous {ℓ} (A , x) = ∀ y → Path (Pointed ℓ) (A , x) (A , y)
 
+foo : ∀ {ℓ} → (X : Pointed ℓ) → isContr (Σ[ Y ∈ Pointed ℓ ] (X ≡ Y))
+foo X = (X , refl) , λ p@(Y , ϕ) → ΣPathP (ϕ , {!!})
 
 
 
@@ -93,10 +95,8 @@ isHomogeneous-ℕ = isDiscrete→isHomogeneous (ℕ , 0) isDiscrete-ℕ
 module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
 
   -- We send points of the truncation to the type of pointed types equivalent to (A , a)
-
   toEquivPtd : ∥ A ∥ → Σ[ 𝔹 ∈ Pointed ℓ ] (A , a) ≡ 𝔹
   toEquivPtd = rec isPropSingl (λ x → (A , x) , h x)
-
 
   private
     P : ∥ A ∥ → Pointed ℓ
@@ -105,7 +105,7 @@ module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
   -- P ∣x∣ is definitionally equal to (A,x) for any x : ∥A∥
   private
     check : ∀ x → P ∣ x ∣ ≡ (A , x)
-    check x = refl
+    check x = ?
 
   -- that is, we can recover terms out of a truncation!
 
@@ -115,9 +115,9 @@ module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
   recover tx = pt (P tx)
 
   recover∣∣ : ∀ (x : A) → recover ∣ x ∣ ≡ x
-  recover∣∣ x = refl
+  recover∣∣ x = ?
 
-
+ 
 
   private
     -- notice that the following typechecks because `fst (P ∣ x ∣)` is definitionally equal to A, but
@@ -146,7 +146,7 @@ private
 
   -- but we can still recover the value:
   test : recover ∣hidden∣ ≡ 17
-  test = refl
+  test = ?
 
   -- Finally, note that `recover` does not use the proof of A being homogeneous to compute this hidden value
 
