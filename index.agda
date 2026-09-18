@@ -2,9 +2,8 @@ module index where
 
 ------------------------------------------------------------------------------
 --
---                         Surprising Applications of
---                             Kraus' Magic Trick
---
+--                         Cursed Truncation Magic
+-- 
 --          Riccardo Borsetto         <@>
 --               Rin Liu              <rin.liu@strath.ac.uk>
 --              Aref Mohammadzadeh    <@>
