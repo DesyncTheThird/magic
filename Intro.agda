@@ -3,22 +3,13 @@ module Intro where
 
 ------------------------------------------------------------------------------
 open import Cubical.Foundations.Prelude
-open import Cubical.Foundations.Equiv
-open import Cubical.Foundations.Isomorphism
-open import Cubical.Foundations.Univalence
-open import Cubical.Foundations.Path
-open import Cubical.Data.Sigma
 import Cubical.Data.Empty as ⊥
 open import Cubical.Relation.Nullary
 
 open import Cubical.Foundations.Function
-open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Foundations.Pointed.Base
-open import Cubical.Foundations.Pointed.Properties
-open import Cubical.Structures.Pointed
 
 open import Cubical.Data.Nat
-open import Cubical.Data.Equality.Conversion
 
 open import Cubical.HITs.PropositionalTruncation.Base
     renaming ( ∥_∥₁ to ∥_∥ 
@@ -155,6 +146,5 @@ private
   test = refl
 
   -- Finally, note that `recover` does not use the proof of A being homogeneous to compute this hidden value
-
 
 ------------------------------------------------------------------------------
