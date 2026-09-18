@@ -115,7 +115,7 @@ module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
   -- P ∣x∣ is definitionally equal to (A,x) for any x : ∥A∥
   private
     check : ∀ x → P ∣ x ∣ ≡ (A , x)
-    check x = {!P ∣ x ∣!}
+    check x = refl
 
   -- that is, we can recover terms out of a truncation!
 
@@ -125,7 +125,7 @@ module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
   recover tx = pt (P tx)
 
   recover∣∣ : ∀ (x : A) → recover ∣ x ∣ ≡ x
-  recover∣∣ x = {!recover ∣ x ∣!}
+  recover∣∣ x = refl
 
 
 
@@ -152,7 +152,7 @@ private
 
   -- but we can still recover the value:
   test : recover ∣hidden∣ ≡ 17
-  test = {!!}
+  test = refl
 
   -- Finally, note that `recover` does not use the proof of A being homogeneous to compute this hidden value
 
