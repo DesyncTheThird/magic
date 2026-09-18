@@ -12,6 +12,7 @@ open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Pointed.Base
 
 open import Cubical.Data.Nat
+open import Cubical.Data.Bool
 open import Cubical.Data.Sigma
 
 open import Cubical.HITs.PropositionalTruncation.Base
@@ -58,66 +59,153 @@ there is an equality of pointed types (A, a) ≡ (A, B).
 isHomogeneous : ∀ {ℓ} → Pointed ℓ → Type (ℓ-suc ℓ)
 isHomogeneous {ℓ} (A , x) = ∀ y → Path (Pointed ℓ) (A , x) (A , y)
 
-foo : ∀ {ℓ} → (X : Pointed ℓ) → isContr (Σ[ Y ∈ Pointed ℓ ] (X ≡ Y))
-foo X = (X , refl) , λ p@(Y , ϕ) → ΣPathP (ϕ , {!!})
+------------------------------------------------------------------------------
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+
+{-
+
+A type A is *decidable* if A + ¬A is inhabited.
+
+A type A is *discrete* if all of its equality types are decidable.
+
+-}
 
 isDiscrete : ∀ {ℓ} → Type ℓ → Type ℓ
 isDiscrete A = (x y : A) → Dec (x ≡ y)
 
 
 
-isDiscrete→isHomogeneous : ∀ {ℓ} → (𝔸@(A , a) : Pointed ℓ) → isDiscrete A → isHomogeneous 𝔸
-isDiscrete→isHomogeneous 𝔸 = hg.isHomogeneousDiscrete {A∙ = 𝔸}
--- with p a x
--- ... | yes q = λ i → A , q i
--- ... | no q = λ i → A , {!!}
-
---(A , {!p a x!})
+isDiscreteBool : isDiscrete Bool
+isDiscreteBool false false = yes refl
+isDiscreteBool false true = no false≢true
+isDiscreteBool true false = no true≢false
+isDiscreteBool true true = yes refl
 
 
 
-isDiscrete-ℕ : isDiscrete ℕ
-isDiscrete-ℕ zero zero = yes refl
-isDiscrete-ℕ zero (suc b) = no znots
-isDiscrete-ℕ (suc a) zero = no snotz
-isDiscrete-ℕ (suc a) (suc b) with isDiscrete-ℕ a b
+isDiscreteℕ : isDiscrete ℕ
+isDiscreteℕ zero zero = yes refl
+isDiscreteℕ zero (suc b) = no znots
+isDiscreteℕ (suc a) zero = no snotz
+isDiscreteℕ (suc a) (suc b) with isDiscreteℕ a b
 ... | yes  p = yes (cong suc p)
 ... | no  ¬p = no (λ x → ¬p (injSuc x))
 
+------------------------------------------------------------------------------
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+
+-- Discrete sets are homogeneous:
+
+isDiscrete→isHomogeneous : ∀ {ℓ} → (𝔸@(A , a) : Pointed ℓ) → isDiscrete A → isHomogeneous 𝔸
+isDiscrete→isHomogeneous 𝔸 = hg.isHomogeneousDiscrete {A∙ = 𝔸}
 
 isHomogeneous-ℕ : isHomogeneous (ℕ , 0)
-isHomogeneous-ℕ = isDiscrete→isHomogeneous (ℕ , 0) isDiscrete-ℕ
+isHomogeneous-ℕ = isDiscrete→isHomogeneous (ℕ , 0) isDiscreteℕ
+
+------------------------------------------------------------------------------
 
 
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+
+{-
+
+For any pointed type X, the type of pointed types equivalent to X is contractible,
+with centre of contraction given by (X, refl), with path from any other pointed path
+to X given by construction.
+
+-}
+
+pointedEqContra : ∀ {ℓ} → (X : Pointed ℓ) → isContr (Σ[ Y ∈ Pointed ℓ ] X ≡ Y)
+pointedEqContra X = (X , refl) , (λ (Y , ϕ) → ΣPathP (ϕ , λ i j → ϕ (i ∧ j)))
+
+------------------------------------------------------------------------------
+
+
+
+-- ======================================================================== --
+-- The magic begins
+-- ======================================================================== --
+
+-- Fix a homogeneous type 𝔸 = (A, a).
 
 module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
 
-  -- We send points of the truncation to the type of pointed types equivalent to (A , a)
+  -- This function sends points of the truncation to the type of pointed types equivalent to (A , a)
+  -- i.e. the type of pairs (𝔹,ϕ), where 𝔹 is a pointed type and ϕ is a proof of (A,a) ≡ 𝔹.
   toEquivPtd : ∥ A ∥ → Σ[ 𝔹 ∈ Pointed ℓ ] (A , a) ≡ 𝔹
-  toEquivPtd = rec isPropSingl (λ x → (A , x) , h x)
+  toEquivPtd = rec (isContr→isProp (pointedEqContra (A , a))) λ a → (A , a) , h a
+
 
   private
+    -- We can define a pointed type family over the truncation by sending each truncated point tx
+    -- to the type 𝔹 from above.
     P : ∥ A ∥ → Pointed ℓ
     P tx = (toEquivPtd tx) .fst
 
-  -- P ∣x∣ is definitionally equal to (A,x) for any x : ∥A∥
+  -- Then, P ∣x∣ is definitionally equal to (A,x) for any x : ∥A∥;
   private
     check : ∀ x → P ∣ x ∣ ≡ (A , x)
-    check x = ?
+    check x = refl
 
   -- that is, we can recover terms out of a truncation!
 
 
 
   recover : ∀ (tx : ∥ A ∥) → fst (P tx)
-  recover tx = pt (P tx)
+  recover tx = (P tx) .snd
 
   recover∣∣ : ∀ (x : A) → recover ∣ x ∣ ≡ x
-  recover∣∣ x = ?
+  recover∣∣ x = refl
 
  
 
@@ -133,22 +221,45 @@ module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
                              PathP (λ i → typ (P (squash ∣ x ∣ ∣ y ∣ i))) x y
     recover-squash x y = cong recover (squash ∣ x ∣ ∣ y ∣)
 
+------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+{-
+
+We start with some truncated data. Imagine in place of ℕ some very complicated type where we
+did a lot of work to produce a term hidden : ∥ ℕ ∥ in a way where the truncation is essential.
+
+-}
 
 private
   open Recover (ℕ , 0) (isDiscrete→isHomogeneous (ℕ , 0) discreteℕ)
 
-  -- this module does not expose `hidden`, so we can't access it from outside
   module _ where
+    -- this module does not export `hidden`, so we can't access it from outside
     private
       hidden : ℕ
       hidden = 17
 
+    -- we only export the value wrapped by the truncation:
     ∣hidden∣ : ∥ ℕ ∥
     ∣hidden∣ = ∣ hidden ∣
 
   -- but we can still recover the value:
-  test : recover ∣hidden∣ ≡ 17
-  test = ?
+  not-hidden : ℕ
+  not-hidden = recover ∣hidden∣
+  
+  _ : not-hidden ≡ 17
+  _ = refl
+  
+  
 
   -- Finally, note that `recover` does not use the proof of A being homogeneous to compute this hidden value
 
@@ -177,7 +288,7 @@ private
 
 -- David Wärn's construction
 {- A simple, general version of Kraus' magic trick, to recover truncated data. -}
-module Magic where
+
 
 -- Let A be an arbitrary type (not necessarily homogeneous).
 module _ {ℓ : Level} {A : Type ℓ} where
@@ -197,18 +308,37 @@ module _ {ℓ : Level} {A : Type ℓ} where
   magic≡id : (a : A) → magic a ≡ a
   magic≡id _ = refl
 
--- An example application.
-open import Cubical.Data.Nat
+------------------------------------------------------------------------------
 
--- We start with some truncated data. Imagine that ℕ is some very complicated type,
--- and we did a lot of work to produce a term hidden : ∥ ℕ ∥, where it was not clear
--- how to do without the truncation.
-hidden : ∥ ℕ ∥
-hidden = ∣ 17 ∣
 
--- Now we have un-truncated data!
-not-hidden : ℕ
-not-hidden = fst (fst (str (fam hidden)))
 
-test' : not-hidden ≡ 17
-test' = refl
+
+
+
+
+
+
+------------------------------------------------------------------------------
+{-
+
+Again, suppose ℕ is some very complicated type and we want to access the value
+hidden : ∥ ℕ ∥ in the truncation.
+
+-}
+
+private
+  module _ where
+    private
+      hidden : ℕ
+      hidden = 23
+
+    ∣hidden'∣ : ∥ ℕ ∥
+    ∣hidden'∣ = ∣ hidden ∣
+
+
+  -- Now we have un-truncated data!
+  not-hidden' : ℕ
+  not-hidden' = fst (fst (str (fam ∣hidden'∣)))
+  
+  _ : not-hidden' ≡ 23
+  _ = refl
