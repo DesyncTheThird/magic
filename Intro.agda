@@ -7,6 +7,8 @@ import Cubical.Data.Empty as ⊥
 open import Cubical.Relation.Nullary
 
 open import Cubical.Foundations.Function
+open import Cubical.Foundations.HLevels
+open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Pointed.Base
 
 open import Cubical.Data.Nat
@@ -151,3 +153,62 @@ private
   -- Finally, note that `recover` does not use the proof of A being homogeneous to compute this hidden value
 
 ------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------------------
+
+-- David Wärn's construction
+{- A simple, general version of Kraus' magic trick, to recover truncated data. -}
+module Magic where
+
+-- Let A be an arbitrary type (not necessarily homogeneous).
+module _ {ℓ : Level} {A : Type ℓ} where
+
+-- Define a family of contractible types over A using contractibility of singletons.
+  fam : ∥ A ∥₁ → TypeOfHLevel ℓ 0
+  fam ∣ a ∣ = singl a , isContrSingl a
+  fam (squash a b i) = isPropHContr (fam a) (fam b) i
+
+-- Now we can seemingly factor the identity map on A through the propositional truncation.
+-- The idea is that fam ∣ a ∣ is a contractible type, so we can take its centre of contraction.
+-- This centre of contraction is (a , refl). So the first component gives us back a.
+  magic : A → A
+  magic = fst ∘ fst ∘ str ∘ fam ∘ ∣_∣
+
+-- magic computes as expected.
+  magic≡id : (a : A) → magic a ≡ a
+  magic≡id _ = refl
+
+-- An example application.
+open import Cubical.Data.Nat
+
+-- We start with some truncated data. Imagine that ℕ is some very complicated type,
+-- and we did a lot of work to produce a term hidden : ∥ ℕ ∥, where it was not clear
+-- how to do without the truncation.
+hidden : ∥ ℕ ∥
+hidden = ∣ 17 ∣
+
+-- Now we have un-truncated data!
+not-hidden : ℕ
+not-hidden = fst (fst (str (fam hidden)))
+
+test' : not-hidden ≡ 17
+test' = refl
