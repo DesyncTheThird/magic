@@ -19,7 +19,6 @@ open import Cubical.HITs.PropositionalTruncation.Base
 
 open import Cubical.HITs.PropositionalTruncation.Properties
 
-
 import Cubical.Foundations.Pointed.Homogeneous as hg
 
 
@@ -121,9 +120,13 @@ module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
 
 
   private
-    check2 : A → A
-    check2 = recover ∘ ∣_∣
+    -- notice that the following typechecks because `fst (P ∣ x ∣)` is definitionally equal to A, but
+    -- `recover : ∥ A ∥ → A` does not, because `fst (P tx)` is not definitionally equal to A.
+    f : A → A
+    f = recover ∘ ∣_∣
 
+    -- we might wonder if (cong recover (squash ∣ x ∣ ∣ y ∣)) therefore has type x ≡ y
+    -- but `fst (P (squash ∣ x ∣ ∣ y ∣ i))`` is not A
     recover-squash : ∀ x y → -- x ≡ y -- this raises an error
                              PathP (λ i → typ (P (squash ∣ x ∣ ∣ y ∣ i))) x y
     recover-squash x y = cong recover (squash ∣ x ∣ ∣ y ∣)
