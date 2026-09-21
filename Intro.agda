@@ -1,6 +1,5 @@
 module Intro where
 
-
 ------------------------------------------------------------------------------
 open import Cubical.Foundations.Prelude
 import Cubical.Data.Empty as ⊥
@@ -12,7 +11,9 @@ open import Cubical.Foundations.Structure
 open import Cubical.Foundations.Pointed.Base
 
 open import Cubical.Data.Nat
+open import Cubical.Data.Nat.Order.Inductive
 open import Cubical.Data.Bool
+open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
 
 open import Cubical.HITs.PropositionalTruncation.Base
@@ -52,7 +53,7 @@ import Cubical.Foundations.Pointed.Homogeneous as hg
 {-
 
 A pointed type (A,a) is *homogeneous* if, for every other point b : A,
-there is an equality of pointed types (A, a) ≡ (A, B).
+there is an equality of pointed types (A, a) ≡ (A, b).
 
 -}
 
@@ -102,15 +103,21 @@ isDiscreteBool false true = no false≢true
 isDiscreteBool true false = no true≢false
 isDiscreteBool true true = yes refl
 
-
-
 isDiscreteℕ : isDiscrete ℕ
 isDiscreteℕ zero zero = yes refl
-isDiscreteℕ zero (suc b) = no znots
-isDiscreteℕ (suc a) zero = no snotz
-isDiscreteℕ (suc a) (suc b) with isDiscreteℕ a b
-... | yes  p = yes (cong suc p)
-... | no  ¬p = no (λ x → ¬p (injSuc x))
+isDiscreteℕ (suc x) zero = no snotz
+isDiscreteℕ zero (suc y) = no znots
+isDiscreteℕ (suc x) (suc y) with isDiscreteℕ x y
+... | yes p = yes (cong suc p)
+... | no ¬p = no (λ q → ¬p (injSuc q))
+
+isDiscreteFinₙ : (n : ℕ) → isDiscrete (Fin n)
+isDiscreteFinₙ n (zero , ϕ) (zero , ψ) = yes (ΣPathP (refl , λ i → isProp→PathP (λ _ → isProp<ᵗ {m = n}) ϕ ψ i))
+isDiscreteFinₙ n (zero , ϕ) (suc y , ψ) = no λ q → znots ((PathPΣ q) .fst)
+isDiscreteFinₙ n (suc x , ϕ) (zero , ψ) = no λ q → snotz ((PathPΣ q) .fst)
+isDiscreteFinₙ n (suc x , ϕ) (suc y , ψ) with isDiscreteℕ x y
+... | yes p = yes (ΣPathP (cong suc p , isProp→PathP (λ i → isProp<ᵗ {n = suc (p i)} {m = n}) ϕ ψ))
+... | no ¬p = no λ q → ¬p (injSuc ((PathPΣ q) .fst))
 
 ------------------------------------------------------------------------------
 
@@ -165,8 +172,10 @@ to X given by construction.
 
 -}
 
+
+
 pointedEqContra : ∀ {ℓ} → (X : Pointed ℓ) → isContr (Σ[ Y ∈ Pointed ℓ ] X ≡ Y)
-pointedEqContra X = (X , refl) , (λ (Y , ϕ) → ΣPathP (ϕ , λ i j → ϕ (i ∧ j)))
+pointedEqContra X = (X , refl) , λ 𝕐@(Y , ϕ) → ΣPathP (ϕ , λ i j → ϕ (i ∧ j))
 
 ------------------------------------------------------------------------------
 
@@ -183,7 +192,7 @@ module Recover {ℓ} (𝔸@(A , a) : Pointed ℓ) (h : isHomogeneous 𝔸) where
   -- This function sends points of the truncation to the type of pointed types equivalent to (A , a)
   -- i.e. the type of pairs (𝔹,ϕ), where 𝔹 is a pointed type and ϕ is a proof of (A,a) ≡ 𝔹.
   toEquivPtd : ∥ A ∥ → Σ[ 𝔹 ∈ Pointed ℓ ] (A , a) ≡ 𝔹
-  toEquivPtd = rec (isContr→isProp (pointedEqContra (A , a))) λ a → (A , a) , h a
+  toEquivPtd = rec (isContr→isProp (pointedEqContra 𝔸)) λ b → (A , b) , h b
 
 
   private
@@ -259,9 +268,7 @@ private
   _ : not-hidden ≡ 17
   _ = refl
   
-  
-
-  -- Finally, note that `recover` does not use the proof of A being homogeneous to compute this hidden value
+  -- Finally, note that `recover` does not use the proof of A being homogeneous to compute this hidden value.
 
 ------------------------------------------------------------------------------
 
@@ -290,23 +297,23 @@ private
 {- A simple, general version of Kraus' magic trick, to recover truncated data. -}
 
 
--- Let A be an arbitrary type (not necessarily homogeneous).
+-- Let A be an arbitrary type, this time not necessarily homogeneous.
 module _ {ℓ : Level} {A : Type ℓ} where
 
--- Define a family of contractible types over A using contractibility of singletons.
-  fam : ∥ A ∥₁ → TypeOfHLevel ℓ 0
-  fam ∣ a ∣ = singl a , isContrSingl a
+  -- Define a family of contractible types over A using contractibility of singletons.
+  fam : ∥ A ∥ → Σ[ X ∈ Type ℓ ] isContr X
+  fam ∣ a ∣ = (Σ[ x ∈ A ] a ≡ x) , isContrSingl a
   fam (squash a b i) = isPropHContr (fam a) (fam b) i
 
--- Now we can seemingly factor the identity map on A through the propositional truncation.
--- The idea is that fam ∣ a ∣ is a contractible type, so we can take its centre of contraction.
--- This centre of contraction is (a , refl). So the first component gives us back a.
+  -- Now we can seemingly factor the identity map on A through the propositional truncation.
+  -- The idea is that fam ∣ a ∣ is a contractible type, so we can take its centre of contraction.
+  -- This centre of contraction is (a , refl), so the first component gives us back a.
   magic : A → A
   magic = fst ∘ fst ∘ str ∘ fam ∘ ∣_∣
 
--- magic computes as expected.
+  -- magic computes as expected:
   magic≡id : (a : A) → magic a ≡ a
-  magic≡id _ = refl
+  magic≡id a = refl
 
 ------------------------------------------------------------------------------
 
